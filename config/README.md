@@ -224,6 +224,16 @@ The stock breakdown logic is therefore documented conceptually without exposing 
 
 ---
 
+Mock Portfolio Values
+
+The public version of the environment also uses mock/synthetic portfolio allocation values for demonstration purposes.
+
+These values do not represent actual portfolio holdings, investment positions, or real market data.
+
+They are included only to demonstrate the environment's portfolio allocation and update logic.
+
+---
+
 ## Data Privacy and Public Repository
 
 The model was developed using multiple market-condition scenarios and corresponding datasets.
