@@ -1,0 +1,33 @@
+{
+    "model_name": "final_model",
+    "model_type": "Deep Q-Network",
+    "version": "1.0",
+    "state_size": 16,
+    "action_size": 9,
+    "framework": "PyTorch",
+    "export_format": "ONNX",
+    "onnx_opset": 17,
+    "training": {
+        "final_checkpoint": "checkpoint_episode_3000.pth",
+        "final_episode": 3000,
+        "epsilon": 0.01
+    },
+    "network": {
+        "input_size": 16,
+        "hidden_layers": [
+            128,
+            128
+        ],
+        "output_size": 9
+    },
+    "portfolio": {
+        "assets": [
+            "stock",
+            "repo",
+            "collateral",
+            "fund"
+        ],
+        "stock_breakdown_available": true
+    },
+    "purpose": "Portfolio allocation and decision support"
+}

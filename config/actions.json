@@ -1,0 +1,11 @@
+{
+    "0": "HOLD",
+    "1": "BUY_STOCK",
+    "2": "SELL_STOCK",
+    "3": "BUY_REPO",
+    "4": "SELL_REPO",
+    "5": "BUY_COLLATERAL",
+    "6": "SELL_COLLATERAL",
+    "7": "BUY_FUND",
+    "8": "SELL_FUND"
+}
