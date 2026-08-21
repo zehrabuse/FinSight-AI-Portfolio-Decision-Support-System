@@ -224,7 +224,7 @@ The stock breakdown logic is therefore documented conceptually without exposing 
 
 ---
 
-Mock Portfolio Values
+## Mock Portfolio Values
 
 The public version of the environment also uses mock/synthetic portfolio allocation values for demonstration purposes.
 
