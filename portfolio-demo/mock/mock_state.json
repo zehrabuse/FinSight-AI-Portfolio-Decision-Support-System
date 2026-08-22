@@ -1,0 +1,18 @@
+{
+  "usd_return": -0.023,
+  "gold_return": 0.014,
+  "brent_return": -0.031,
+  "us_10y_return": 0.008,
+  "turkiye_cds": 312.4,
+  "inflation": 0.029,
+  "tcmb_policy_rate": 0.46,
+  "fund_return": -0.018,
+  "portfolio_growth": 0.973,
+  "active_value": 97300.0,
+  "cash_value": 5000.0,
+  "investor_count": 12450,
+  "stock_weight": 0.91,
+  "repo_weight": 0.05,
+  "collateral_weight": 0.02,
+  "fund_weight": 0.02
+}
