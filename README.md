@@ -2,7 +2,7 @@
 
 A Deep Q-Network (DQN) based reinforcement learning system designed to support portfolio allocation decisions under different market conditions.
 
-The system evaluates a 16-dimensional financial state and selects one of 9 portfolio actions. The trained model is exported to ONNX and can be integrated into backend applications using ONNX Runtime.
+The system evaluates a 16-dimensional financial state and selects one of 9 portfolio actions. The trained model is exported to ONNX format for portable inference.
 
 An optional LLM-based explainability layer is also included to convert the model's decisions into natural-language explanations.
 
@@ -12,10 +12,10 @@ An optional LLM-based explainability layer is also included to convert the model
 
 The system focuses on portfolio allocation across four main asset groups:
 
-- Stock
-- Repo / TPP
-- Collateral
-- Fund
+* Stock
+* Repo / TPP
+* Collateral
+* Fund
 
 The DQN agent receives market, fund, and portfolio information as its state and produces Q-values for nine possible actions.
 
@@ -47,22 +47,20 @@ The decision-making and explanation layers are intentionally separated.
 
 ---
 
-# Model
+## Model
 
-## Model Information
+| Property    | Value                |
+| ----------- | -------------------- |
+| Model       | Deep Q-Network (DQN) |
+| Model Name  | `final_model`        |
+| State Size  | 16                   |
+| Action Size | 9                    |
+| Input Type  | `float32`            |
+| Output      | 9 Q-values           |
+| ONNX Opset  | 17                   |
+| Format      | ONNX                 |
 
-| Property | Value |
-|---|---|
-| Model | Deep Q-Network (DQN) |
-| Model Name | final_model |
-| State Size | 16 |
-| Action Size | 9 |
-| Input Type | float32 |
-| Output | 9 Q-values |
-| ONNX Opset | 17 |
-| Format | ONNX |
-
-## Model Architecture
+### Model Architecture
 
 ```text
 Input: 16
@@ -99,13 +97,13 @@ BUY_FUND
 
 ---
 
-# State
+## State
 
 The model uses a 16-dimensional state vector.
 
 The order of the state features must not be changed.
 
-## Macroeconomic Features
+### Macroeconomic Features
 
 1. USD Return
 2. Gold Return
@@ -115,7 +113,7 @@ The order of the state features must not be changed.
 6. Inflation
 7. TCMB Policy Rate
 
-## Fund & Portfolio Features
+### Fund & Portfolio Features
 
 8. Fund Return
 9. Portfolio Growth
@@ -123,7 +121,7 @@ The order of the state features must not be changed.
 11. Cash Value
 12. Investor Count
 
-## Portfolio Allocation
+### Portfolio Allocation
 
 13. Stock Weight
 14. Repo Weight
@@ -140,21 +138,21 @@ config/features.json
 
 ---
 
-# Actions
+## Actions
 
 The model produces 9 possible actions.
 
-| Index | Action |
-|---:|---|
-| 0 | HOLD |
-| 1 | BUY_STOCK |
-| 2 | SELL_STOCK |
-| 3 | BUY_REPO |
-| 4 | SELL_REPO |
-| 5 | BUY_COLLATERAL |
-| 6 | SELL_COLLATERAL |
-| 7 | BUY_FUND |
-| 8 | SELL_FUND |
+| Index | Action          |
+| ----: | --------------- |
+|     0 | HOLD            |
+|     1 | BUY_STOCK       |
+|     2 | SELL_STOCK      |
+|     3 | BUY_REPO        |
+|     4 | SELL_REPO       |
+|     5 | BUY_COLLATERAL  |
+|     6 | SELL_COLLATERAL |
+|     7 | BUY_FUND        |
+|     8 | SELL_FUND       |
 
 The action mapping is also stored in:
 
@@ -162,18 +160,16 @@ The action mapping is also stored in:
 config/actions.json
 ```
 
-Applications are recommended to display the action name together with the action index.
-
 ---
 
-# Portfolio Structure
+## Portfolio Structure
 
 The environment manages four main asset groups:
 
-- Stock
-- Repo / TPP
-- Collateral
-- Fund
+* Stock
+* Repo / TPP
+* Collateral
+* Fund
 
 The last four features of the DQN state represent these portfolio weights:
 
@@ -186,74 +182,24 @@ fund_weight
 
 Portfolio allocation constraints are handled by the Environment.
 
----
-
-# Stock Breakdown
-
-The stock portfolio contains the following stock groups:
-
-- ASELS
-- BIMAS
-- THYAO
-- AKBNK
-- TUPRS
-- YKBNK
-- ISCTR
-- KCHOL
-- SAHOL
-- TCELL
-- OTHER
-
-An important architectural distinction is that the stock breakdown is **not directly included in the 16-dimensional DQN state**.
-
-The stock breakdown is maintained and dynamically updated by the Environment after portfolio actions.
-
-For example:
-
-```text
-DQN
- ↓
-BUY_STOCK
- ↓
-Environment
- ↓
-Stock Weight increases
- ↓
-Portfolio is rebalanced
- ↓
-Stock Breakdown is updated
-```
-
-Therefore, running the ONNX model independently produces:
-
-- Q-values
-- Selected action
-
-The detailed stock breakdown requires the Environment or the corresponding portfolio calculation logic to be integrated into the backend.
-
-Initial stock breakdown information is available in:
-
-```text
-config/stock_breakdown.json
-```
+Internal portfolio allocation details are intentionally not exposed in this public repository.
 
 ---
 
-# Environment
+## Environment
 
 The Environment is responsible for applying the action selected by the DQN model and calculating its effect on the portfolio.
 
 The Environment handles:
 
-- Portfolio allocation
-- Asset transfers
-- Stock breakdown
-- Reward calculation
-- Risk calculation
-- Deviation
-- Portfolio multiplier
-- Transaction costs
-- Episode termination
+* Portfolio allocation
+* Asset transfers
+* Reward calculation
+* Risk calculation
+* Deviation
+* Portfolio multiplier
+* Transaction costs
+* Episode termination
 
 For example, when the DQN selects `BUY_STOCK`:
 
@@ -264,11 +210,9 @@ BUY_STOCK
  ↓
 Environment
  ↓
-Stock Weight Updated
+Portfolio Allocation Updated
  ↓
 Required Amount Transferred
- ↓
-Stock Breakdown Updated
  ↓
 New Portfolio State
  ↓
@@ -277,19 +221,57 @@ Reward / Risk Calculated
 
 The DQN and Environment should therefore be evaluated together when considering the complete portfolio decision system.
 
+Internal portfolio calculation logic is not included in the public model package.
+
 ---
 
-# ONNX Model
+## Scenario-Based Training
+
+The model was trained using different market and crisis scenarios designed to represent a range of market conditions.
+
+The scenarios include:
+
+1. Normal Market
+2. COVID Period
+3. Severe Market Crash
+4. Bubble / Strong Bull Market
+5. Historical Crisis Periods
+6. High Uncertainty / High Volatility
+7. Synthetic Crises
+8. Flash Crash
+9. High Volatility
+10. Long Bear Market
+11. Long Bull Market
+12. Sideways Market
+13. Inflation Shock
+14. Interest Rate Shock
+15. Geopolitical Crisis
+16. Black Swan
+
+These scenarios are designed to evaluate how the model behaves under different market conditions, including:
+
+* Market crashes
+* Strong upward trends
+* Long-term downward trends
+* High volatility
+* Macroeconomic shocks
+* Unexpected extreme events
+
+Detailed internal scenario-generation procedures and private training data are not included in the public repository.
+
+---
+
+## ONNX Model
 
 The trained model has been exported to ONNX format.
 
-Model file:
+### Model File
 
 ```text
 model/final_model.onnx
 ```
 
-## Input
+### Input
 
 ```text
 Name:
@@ -302,7 +284,7 @@ Type:
 float32
 ```
 
-## Output
+### Output
 
 ```text
 Name:
@@ -312,15 +294,11 @@ Shape:
 [batch_size, 9]
 ```
 
-The ONNX model can be integrated into:
-
-- Python applications
-- Java backend applications
-- Other systems supporting ONNX Runtime
+The ONNX model provides a portable representation of the trained DQN and can be used for inference with ONNX Runtime.
 
 ---
 
-# Inference Flow
+## Inference Flow
 
 The basic inference process is:
 
@@ -337,9 +315,9 @@ The basic inference process is:
         ↓
 6. Map action index to action name
         ↓
-7. Send action to Environment
+7. Apply action through Environment
         ↓
-8. Update portfolio
+8. Update portfolio state
         ↓
 9. Generate decision context
         ↓
@@ -348,9 +326,9 @@ The basic inference process is:
 
 ---
 
-# Explainable AI / LLM Integration
+## Explainable AI / LLM Integration
 
-The LLM is **not the decision-making model**.
+The LLM is **not** the decision-making model.
 
 The responsibilities are separated into three layers.
 
@@ -384,54 +362,17 @@ Natural Language Explanation
 
 The LLM should not:
 
-- Select a new action
-- Override the DQN decision
-- Modify portfolio weights
-- Calculate stock allocations independently
-- Replace the DQN decision
-- Provide an independent investment decision
+* Select a new action
+* Override the DQN decision
+* Modify portfolio weights
+* Replace the DQN decision
+* Provide an independent investment decision
 
 Its purpose is to explain the actual model decision based on the information provided by the DQN and Environment.
 
 ---
 
-# Scenario-Based Training
-
-The model was trained using different market and crisis scenarios designed to represent a range of market conditions.
-
-The scenarios include:
-
-1. Normal Market
-2. COVID Period
-3. Severe Market Crash
-4. Bubble / Strong Bull Market
-5. Historical Crisis Periods
-6. High Uncertainty / High Volatility
-7. Synthetic Crises
-8. Flash Crash
-9. High Volatility
-10. Long Bear Market
-11. Long Bull Market
-12. Sideways Market
-13. Inflation Shock
-14. Interest Rate Shock
-15. Geopolitical Crisis
-16. Black Swan
-
-These scenarios are designed to evaluate how the model behaves under different market conditions, including:
-
-- Market crashes
-- Strong upward trends
-- Long-term downward trends
-- High volatility
-- Macroeconomic shocks
-- Unexpected extreme events
-
-Detailed scenario descriptions can be documented separately.
-
----
-
-# Scenario Information for LLM
+## Scenario Information for LLM
 
 When the LLM explanation layer is used, providing only a scenario number is not recommended.
 
@@ -448,27 +389,25 @@ Scenario Name:
 Flash Crash
 
 Scenario Description:
-A rapid 20-30% market decline occurring within 1-2 days,
-followed by a recovery over the following days.
+A rapid market decline followed by a recovery period.
 ```
 
 Providing the scenario name and description allows the LLM to relate the DQN decision to the market conditions in which it was made.
 
 ---
 
-# Configuration
+## Configuration
 
-The `config/` directory contains supporting information required for using and integrating the model.
+The `config/` directory contains supporting information required for using and understanding the model.
 
 ```text
 config/
 ├── actions.json
 ├── features.json
-├── stock_breakdown.json
 └── metadata.json
 ```
 
-## actions.json
+### actions.json
 
 Defines the mapping between action indices and action names.
 
@@ -480,37 +419,35 @@ Example:
 2 → SELL_STOCK
 ```
 
-## features.json
+### features.json
 
 Defines the 16 state features, including:
 
-- Feature order
-- Feature name
-- Category
-- Data source
-- Applied transformation
+* Feature order
+* Feature name
+* Category
+* Data source
+* Applied transformation
 
-## stock_breakdown.json
-
-Contains information related to the internal stock portfolio allocation.
-
-## metadata.json
+### metadata.json
 
 Contains general model metadata such as:
 
-- Model name
-- State size
-- Action size
-- Model architecture
-- ONNX information
+* Model name
+* State size
+* Action size
+* Model architecture
+* ONNX information
+
+Private portfolio allocation details and private source-data configurations are not included in the public configuration package.
 
 ---
 
-# Logging
+## Logging
 
 During training and experimentation, model behavior can be recorded using JSONL logs.
 
-Two main log files can be used:
+Typical log files include:
 
 ```text
 logs/
@@ -518,102 +455,97 @@ logs/
 └── episode_logs.jsonl
 ```
 
-## step_logs.jsonl
+### step_logs.jsonl
 
 Step-level information may include:
 
-- Episode
-- Scenario
-- Scenario name
-- Scenario description
-- Step
-- Date
-- Action
-- Action name
-- Action type
-- Reward
-- Risk
-- Fund return
-- Deviation
-- Portfolio multiplier
-- Portfolio value
-- Transaction cost
-- Portfolio allocation
-- Stock breakdown
+* Episode
+* Scenario
+* Step
+* Date
+* Action
+* Action name
+* Reward
+* Risk
+* Fund return
+* Deviation
+* Portfolio multiplier
+* Portfolio value
+* Transaction cost
+* Portfolio allocation
 
-## episode_logs.jsonl
+### episode_logs.jsonl
 
 Episode-level information may include:
 
-- Total reward
-- Average reward
-- Average loss
-- Positive reward count
-- Negative reward count
-- Action distribution
-- Exploration / exploitation ratio
-- Action change rate
-- Transaction cost
-- Termination reason
-- Epsilon
+* Total reward
+* Average reward
+* Average loss
+* Positive reward count
+* Negative reward count
+* Action distribution
+* Exploration / exploitation ratio
+* Action change rate
+* Transaction cost
+* Termination reason
+* Epsilon
 
 These logs can be useful for model analysis, debugging, system evaluation and future LLM explainability studies.
 
+Private training logs and sensitive financial information are not included in the public repository.
+
 ---
 
-# LLM Prompt Design
+## LLM Prompt Design
 
 The LLM should receive sufficient context to explain why the DQN selected a particular action.
 
 The prompt may contain:
 
-## Model Decision
+### Model Decision
 
-- Selected action
-- Action name
-- Q-values
-- Exploration / exploitation information
+* Selected action
+* Action name
+* Q-values
+* Exploration / exploitation information
 
-## Portfolio Information
+### Portfolio Information
 
-- Total portfolio value
-- Stock weight
-- Repo / TPP weight
-- Collateral weight
-- Fund weight
-- Stock breakdown
+* Total portfolio value
+* Stock weight
+* Repo / TPP weight
+* Collateral weight
+* Fund weight
 
-## Market Information
+### Market Information
 
-- USD Return
-- Gold Return
-- Brent Return
-- US 10Y Return
-- Türkiye CDS
-- Inflation
-- TCMB Policy Rate
-- Fund Return
-- Portfolio Growth
-- Active Value
-- Cash Value
-- Investor Count
+* USD Return
+* Gold Return
+* Brent Return
+* US 10Y Return
+* Türkiye CDS
+* Inflation
+* TCMB Policy Rate
+* Fund Return
+* Portfolio Growth
+* Active Value
+* Cash Value
+* Investor Count
 
-## Risk & Decision Information
+### Risk & Decision Information
 
-- Reward
-- Risk
-- Deviation
-- Portfolio Multiplier
-- Transaction Cost
-- Previous Action
-- Action Change
+* Reward
+* Risk
+* Deviation
+* Portfolio Multiplier
+* Transaction Cost
+* Previous Action
+* Action Change
 
-## Scenario Information
+### Scenario Information
 
-- Scenario name
-- Scenario description
-
-The LLM should explain the decision based only on the information provided.
+* Scenario name
+* Scenario description
 
 Example task:
 
@@ -629,33 +561,32 @@ Base the explanation only on the provided data.
 
 ---
 
-# LLM Responsibility
+## LLM Responsibility
 
 The LLM is an explanation layer and should not act as another portfolio decision-maker.
 
 The LLM should:
 
-- Explain the selected action
-- Relate the decision to market conditions
-- Explain the relevance of the scenario
-- Interpret the portfolio allocation
-- Interpret the stock breakdown
-- Consider reward and risk information
-- Produce a natural-language explanation
+* Explain the selected action
+* Relate the decision to market conditions
+* Explain the relevance of the scenario
+* Interpret the portfolio allocation
+* Consider reward and risk information
+* Produce a natural-language explanation
 
 The LLM should not:
 
-- Choose another action
-- Override the DQN
-- Modify portfolio weights
-- Independently calculate stock allocations
-- Generate unsupported financial information
+* Choose another action
+* Override the DQN
+* Modify portfolio weights
+* Independently calculate portfolio allocations
+* Generate unsupported financial information
 
 ---
 
-# Installation
+## Installation
 
-Clone the repository and install the required dependencies:
+Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -672,7 +603,7 @@ python-dotenv
 
 ---
 
-# Environment Variables
+## Environment Variables
 
 The LLM integration uses an environment variable for the API key.
 
@@ -686,7 +617,7 @@ For local development, create a `.env` file:
 GEMINI_API_KEY=your_api_key_here
 ```
 
-The `.env` file must **not** be committed to GitHub.
+The `.env` file must not be committed to GitHub.
 
 The repository `.gitignore` should contain:
 
@@ -701,15 +632,14 @@ venv/
 
 API keys should never be stored inside:
 
-- Source code
-- Model files
-- Configuration files
-- Frontend code
-- Public repositories
+* Source code
+* Model files
+* Configuration files
+* Public repositories
 
 ---
 
-# Model Check
+## Model Check
 
 The ONNX model can be checked using:
 
@@ -719,12 +649,12 @@ python check_model.py
 
 This script displays:
 
-- Input name
-- Input shape
-- Input type
-- Output name
-- Output shape
-- Output type
+* Input name
+* Input shape
+* Input type
+* Output name
+* Output shape
+* Output type
 
 Expected model specification:
 
@@ -747,7 +677,7 @@ Shape:
 
 ---
 
-# Run Model
+## Run Model
 
 The provided `run_model.py` script runs the ONNX model using the mock state.
 
@@ -757,10 +687,10 @@ python run_model.py
 
 The script displays:
 
-- State values
-- Q-values
-- Selected action index
-- Selected action name
+* State values
+* Q-values
+* Selected action index
+* Selected action name
 
 Example:
 
@@ -773,15 +703,45 @@ Action       : BUY_FUND
 
 ---
 
-# Run Full Demo
+## Portfolio Demo
+
+The `portfolio_demo.py` script demonstrates how the trained ONNX model can be used within a portfolio decision-support workflow.
+
+The demo uses an example state and shows the model inference and resulting portfolio decision context without exposing private financial datasets or proprietary internal portfolio logic.
+
+General flow:
+
+```text
+Example State
+      ↓
+ ONNX Model
+      ↓
+   Q-values
+      ↓
+Selected Action
+      ↓
+Portfolio Decision Context
+```
+
+Run:
+
+```bash
+python portfolio_demo.py
+```
+
+The portfolio demo is intended for demonstration and model integration purposes.
+
+---
+
+## Run Full Demo
 
 The `demo.py` script combines:
 
-- Mock state
-- ONNX model inference
-- Q-value generation
-- Action selection
-- LLM-based explanation
+* Mock state
+* ONNX model inference
+* Q-value generation
+* Action selection
+* LLM-based explanation
 
 Run:
 
@@ -821,7 +781,7 @@ as the explanation prompt.
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```text
 FINAL_MODEL/
@@ -834,7 +794,6 @@ FINAL_MODEL/
 ├── config/
 │   ├── actions.json
 │   ├── features.json
-│   ├── stock_breakdown.json
 │   └── metadata.json
 │
 ├── mock/
@@ -845,6 +804,7 @@ FINAL_MODEL/
 │
 ├── check_model.py
 ├── run_model.py
+├── portfolio_demo.py
 ├── demo.py
 │
 ├── requirements.txt
@@ -853,140 +813,53 @@ FINAL_MODEL/
 
 ---
 
-# Backend Integration
+## Public Repository Scope
 
-The model can be integrated into a backend application using ONNX Runtime.
+This public repository focuses on the components developed for the reinforcement learning portfolio decision-support system and its explainability workflow.
 
-The recommended architecture is:
+### Included
 
-```text
-Backend
-   ↓
-Prepare State
-   ↓
-ONNX Model
-   ↓
-Q-values
-   ↓
-Action
-   ↓
-Environment / Portfolio Logic
-   ↓
-Updated Portfolio State
-   ↓
-Decision Context
-   ↓
-LLM API
-   ↓
-Explanation
-   ↓
-Frontend
-```
+* Trained DQN model
+* ONNX model
+* Model configuration required for inference
+* Action mapping
+* State feature definitions
+* Mock state
+* ONNX inference scripts
+* Portfolio demonstration
+* Scenario-based model design
+* LLM explainability integration
+* Example XAI prompt
 
-The backend should be responsible for:
+### Not Included
 
-- Preparing the 16-dimensional state
-- Running ONNX inference
-- Mapping the action index
-- Applying the action through the Environment
-- Maintaining portfolio information
-- Preparing the LLM context
+Private financial datasets, proprietary portfolio details, internal portfolio allocation logic, sensitive training logs and other confidential development resources are not included in the public repository.
+
+The public package is intended to demonstrate the trained model, its decision-making workflow and its explainability pipeline without exposing private source data.
 
 ---
 
-# Important Architectural Distinction
+## Important Notes
 
-The system consists of three separate layers.
-
-## Layer 1 — DQN
-
-**Role:** Decision-making
-
-```text
-Input:
-16-dimensional state
-
-Output:
-9 Q-values
-
-Task:
-Select an action
-```
-
-## Layer 2 — Environment
-
-**Role:** Apply and evaluate the decision
-
-```text
-Portfolio Update
-Stock Breakdown
-Reward
-Risk
-Transaction Cost
-Scenario
-Termination
-```
-
-## Layer 3 — LLM
-
-**Role:** Explain the decision
-
-```text
-DQN + Environment outputs
-          ↓
-     Natural Language
-       Explanation
-```
-
-These responsibilities should remain separated.
+* The model expects a 16-dimensional state.
+* The state feature order must not be changed.
+* The action mapping must remain unchanged.
+* The ONNX model produces Q-values for the 9 available actions.
+* The highest Q-value determines the selected action.
+* Detailed internal portfolio allocation logic is not part of the public model package.
+* Portfolio updates require the corresponding Environment logic.
+* The LLM is an explanation layer and not the decision-making model.
+* The LLM must not override the DQN decision.
+* Scenario name and scenario description should be provided to the LLM when available.
+* LLM explanations should be based only on actual system outputs.
+* API keys must not be committed to the repository.
+* `.env` must remain local.
+* Prompt-based LLM integration is not equivalent to LLM fine-tuning.
+* Private training datasets are not included in the public repository.
 
 ---
 
-# Public Repository Scope
-
-This public repository focuses on the trained model and its inference / explainability pipeline.
-
-Included:
-
-- Trained DQN model
-- ONNX model
-- Model configuration
-- Action mapping
-- State feature definitions
-- Stock breakdown configuration
-- Mock state
-- ONNX inference scripts
-- LLM explainability integration
-- Example prompt
-
-Private financial datasets and sensitive training data are not included in the public repository.
-
-The model can therefore be inspected and demonstrated without exposing private source data.
-
----
-
-# Important Notes
-
-- The model expects a 16-dimensional state.
-- The state feature order must not be changed.
-- The action mapping must remain unchanged.
-- The ONNX model produces Q-values for the 9 available actions.
-- The highest Q-value determines the selected action.
-- The ONNX model does not independently produce stock breakdown information.
-- Stock breakdown is handled by the Environment.
-- Portfolio updates require the Environment or corresponding backend portfolio logic.
-- The LLM is an explanation layer and not the decision-making model.
-- The LLM must not override the DQN decision.
-- Scenario name and scenario description should be provided to the LLM when available.
-- LLM explanations should be based only on actual system outputs.
-- API keys must not be committed to the repository.
-- `.env` must remain local.
-- Prompt-based LLM integration is not equivalent to LLM fine-tuning.
-- Training datasets are not included in the public repository.
-
----
-
-# Summary
+## Summary
 
 This project provides a reinforcement learning based portfolio decision-support system using a Deep Q-Network.
 
@@ -999,7 +872,7 @@ Decision
 
 Environment
  ↓
-Portfolio & Stock Updates
+Portfolio Decision Context
 
 LLM
  ↓
@@ -1008,4 +881,4 @@ Decision Explanation
 
 The separation between decision-making, portfolio simulation and natural-language explanation allows the system to expose the actual DQN decision while providing an interpretable explanation based on the corresponding market and portfolio context.
 
-The final trained model is provided in ONNX format and can be integrated into backend applications using ONNX Runtime.
+The final trained model is provided in ONNX format, together with the configuration, inference scripts, portfolio demonstration and optional LLM-based explainability workflow.
